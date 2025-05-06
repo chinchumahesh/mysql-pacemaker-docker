@@ -31,8 +31,8 @@ A Docker-based setup for a self-healing MySQL cluster with automated failover, r
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/mysql-ha-cluster.git
-cd mysql-ha-cluster
+git clone https://github.com/chinchumahesh/mysql-pacemaker-docker.git
+cd mysql-pacemaker-docke
 ```
 
 ### 2. Configure Environment Variables
