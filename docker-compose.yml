@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  mysql-master:
+    build: ./mysql/master
+    hostname: mysql-master
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_REPL_USER: repl_user
+      MYSQL_REPL_PASSWORD: replpass
+    networks:
+      mysql_net:
+        ipv4_address: 192.168.100.2
+
+  mysql-slave1:
+    build: ./mysql/slave1
+    hostname: mysql-slave1
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_MASTER_HOST: mysql-master
+      MYSQL_REPL_USER: repl_user
+      MYSQL_REPL_PASSWORD: replpass
+    depends_on:
+      - mysql-master
+    networks:
+      mysql_net:
+        ipv4_address: 192.168.100.3
+
+  mysql-slave2:
+    build: ./mysql/slave2
+    hostname: mysql-slave2
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_MASTER_HOST: mysql-master
+      MYSQL_REPL_USER: repl_user
+      MYSQL_REPL_PASSWORD: replpass
+    depends_on:
+      - mysql-master
+    networks:
+      mysql_net:
+        ipv4_address: 192.168.100.4
+
+  pacemaker:
+    build: ./pacemaker
+    hostname: pacemaker
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    depends_on:
+      - mysql-master
+      - mysql-slave1
+      - mysql-slave2
+    networks:
+      mysql_net:
+        ipv4_address: 192.168.100.5
+
+  mysql-router:
+    build: ./mysql-router
+    depends_on:
+      - pacemaker
+    ports:
+      - "6446:6446"  # RW port
+      - "6447:6447"  # RO port
+    networks:
+      mysql_net:
+        ipv4_address: 192.168.100.6
+
+  haproxy:
+    build: ./haproxy
+    ports:
+      - "3306:3306"  # Unified access
+    depends_on:
+      - mysql-router
+    networks:
+      mysql_net:
+        ipv4_address: 192.168.100.7
+
+networks:
+  mysql_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
